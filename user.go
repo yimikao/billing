@@ -1,4 +1,4 @@
-package cashapp
+package main
 
 import (
 	"time"
@@ -7,17 +7,17 @@ import (
 )
 
 type Model struct {
+	ID        uuid.UUID `json:"id"`
+	Reference string    `json:"reference"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	DeletedAt time.Time `json:"deleted_at"`
 }
 
 type User struct {
-	ID        uuid.UUID `json:"id"`
-	Reference string    `json:"reference"`
-	Tag       string    `json:"tag"`
-	FullName  string    `json:"full_name"`
-	Email     string    `json:"email"`
+	Tag      string `json:"tag"`
+	FullName string `json:"full_name"`
+	Email    string `json:"email"`
 
 	Model
 }
