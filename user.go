@@ -1,17 +1,15 @@
 package main
 
 import (
-	"time"
+	"strings"
 
 	"github.com/google/uuid"
 )
 
-type Model struct {
-	ID        uuid.UUID `json:"id"`
-	Reference string    `json:"reference"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	DeletedAt time.Time `json:"deleted_at"`
+type Email string
+
+func (e Email) String() string {
+	return strings.ToLower(string(e))
 }
 
 type User struct {
@@ -20,4 +18,13 @@ type User struct {
 	Email    string `json:"email"`
 
 	Model
+}
+
+type UserRepository interface {
+	Create(*User) error
+}
+
+type FindUserOptions struct {
+	ID    uuid.UUID
+	Email Email
 }
