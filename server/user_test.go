@@ -58,7 +58,7 @@ func TestUserHandler_Create(t *testing.T) {
 			name:           "successfully created a user",
 			expectedStatus: http.StatusOK,
 			buildStubs: func(store *mocks.MockUserRepository) {
-				store.EXPECT().Create(gomock.Any()).Times(1)
+				store.EXPECT().Create(gomock.Any()).Times(1).Return(nil)
 			},
 			requestBody: userCreateRequest{
 				Email: billing.Email("ayo@gmail.com"),
