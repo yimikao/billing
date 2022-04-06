@@ -24,6 +24,7 @@ type UserRepository interface {
 	Create(*User) error
 }
 
+// findUser
 type FindUserOptions struct {
 	ID    uuid.UUID
 	Email Email
