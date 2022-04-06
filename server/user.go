@@ -28,7 +28,9 @@ func NewUserHandler(logger log.Entry, userRepo billing.UserRepository) *UserHand
 }
 
 type userCreateRequest struct {
-	Email billing.Email `json:"email"`
+	Tag      string        `json:"tag"`
+	FullName string        `json:"full_name"`
+	Email    billing.Email `json:"email"`
 	GenericRequest
 }
 
@@ -65,6 +67,17 @@ func (u *UserHandler) create(w http.ResponseWriter, r *http.Request) {
 
 	if err := req.Validate(); err != nil {
 		_ = render.Render(w, r, newAPIError(http.StatusBadRequest, err.Error()))
+		return
+	}
+
+	us := &billing.User{
+		Tag:      req.Tag,
+		FullName: req.FullName,
+		Email:    req.Email.String(),
+	}
+
+	if err := u.userRepo.Create(us); err != nil {
+		_ = render.Render(w, r, newAPIError(http.StatusInternalServerError, err.Error()))
 		return
 	}
 
