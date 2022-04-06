@@ -1,4 +1,4 @@
-package main
+package billing
 
 import "github.com/google/uuid"
 
