@@ -22,6 +22,7 @@ type User struct {
 
 type UserRepository interface {
 	Create(*User) error
+	GetByReference(string) (*User, error)
 }
 
 // findUser

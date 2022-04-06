@@ -22,3 +22,20 @@ func (l *userLayer) Create(u *billing.User) error {
 
 	return err
 }
+
+func (l *userLayer) GetByReference(reference string) (*billing.User, error) {
+
+	ctx, cancelFunc := withContext()
+	defer cancelFunc()
+
+	user := new(billing.User)
+
+	if err := l.db.WithContext(ctx).Model(user).
+		Where("user.reference = ?", reference).
+		Select(); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+
+}

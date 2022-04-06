@@ -47,3 +47,18 @@ func (mr *MockUserRepositoryMockRecorder) Create(arg0 interface{}) *gomock.Call 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepository)(nil).Create), arg0)
 }
+
+// GetByReference mocks base method.
+func (m *MockUserRepository) GetByReference(arg0 string) (*billing.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByReference", arg0)
+	ret0, _ := ret[0].(*billing.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByReference indicates an expected call of GetByReference.
+func (mr *MockUserRepositoryMockRecorder) GetByReference(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByReference", reflect.TypeOf((*MockUserRepository)(nil).GetByReference), arg0)
+}
