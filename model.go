@@ -37,3 +37,7 @@ func RunMigrations(db *pg.DB) error {
 
 	return nil
 }
+
+func RunSeeds(db *pg.DB) error {
+	return nil
+}
