@@ -33,7 +33,7 @@ func (l *userLayer) GetByReference(reference string) (*billing.User, error) {
 	if err := l.db.WithContext(ctx).Model(user).
 		Where("user.reference = ?", reference).
 		Select(); err != nil {
-		return nil, err
+		return user, err
 	}
 
 	return user, nil
