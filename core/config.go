@@ -7,13 +7,34 @@ import (
 	"sync/atomic"
 
 	"github.com/hashicorp/consul/api"
+	"github.com/spf13/viper"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 var (
 	cfgSingleton   atomic.Value
 	ErrKeyNotFound = fmt.Errorf("%s not found", consulKVPair)
-	consulKVPair   = "fluidcoins/flip"
+	consulKVPair   = "yimikao/billing"
 )
+
+var (
+	oauthConfig = &oauth2.Config{
+		ClientID:     "",
+		ClientSecret: "",
+		RedirectURL:  "https://localhost:9090/callback",
+		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
+		Endpoint:     google.Endpoint,
+	}
+
+	oauthState = "state"
+)
+
+func InitOauth() {
+	oauthConfig.ClientID = viper.GetString("CLIENT_ID")
+	oauthConfig.ClientSecret = viper.GetString("CLIENT_SECRET")
+	// oauthState = viper.GetString("oauthStateString")
+}
 
 type Config struct {
 	Database struct {
