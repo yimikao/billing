@@ -19,7 +19,7 @@ var (
 )
 
 var (
-	oauthConfig = &oauth2.Config{
+	OauthConfig = &oauth2.Config{
 		ClientID:     "",
 		ClientSecret: "",
 		RedirectURL:  "https://localhost:9090/callback",
@@ -27,13 +27,26 @@ var (
 		Endpoint:     google.Endpoint,
 	}
 
-	oauthState = "state"
+	OauthState = "state"
 )
 
 func InitOauth() {
-	oauthConfig.ClientID = viper.GetString("CLIENT_ID")
-	oauthConfig.ClientSecret = viper.GetString("CLIENT_SECRET")
+	OauthConfig.ClientID = viper.GetString("CLIENT_ID")
+	OauthConfig.ClientSecret = viper.GetString("CLIENT_SECRET")
 	// oauthState = viper.GetString("oauthStateString")
+}
+
+func InitViper() {
+	viper.SetConfigName("app")
+
+	viper.AddConfigPath(".")
+
+	viper.AutomaticEnv()
+
+	viper.SetConfigType("env")
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Printf("Error reading config file, %s", err)
+	}
 }
 
 type Config struct {
