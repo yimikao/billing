@@ -9,11 +9,11 @@ import (
 )
 
 type Model struct {
-	ID        uuid.UUID `json:"id"`
-	Reference string    `json:"reference"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	DeletedAt time.Time `json:"deleted_at"`
+	ID        uuid.UUID  `json:"id"`
+	Reference string     `json:"reference"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `json:"-" pg:",soft_delete"`
 }
 
 func RunMigrations(db *pg.DB) error {
@@ -21,7 +21,7 @@ func RunMigrations(db *pg.DB) error {
 
 		(*User)(nil),
 		(*Wallet)(nil),
-		(*Transaction)(nil),
+		(*WalletTransaction)(nil),
 		(*TransactionEntry)(nil),
 	}
 
