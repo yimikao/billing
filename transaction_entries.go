@@ -2,11 +2,15 @@ package billing
 
 import "github.com/google/uuid"
 
-type TransactionType string
+// type TransactionType string
+type TransactionType uint8
 
 const (
-	Credit TransactionType = "credit"
-	Debit  TransactionType = "debit"
+	// Credit TransactionType = "credit"
+	// Debit  TransactionType = "debit"
+
+	Credit TransactionType = iota
+	Debit
 )
 
 type TransactionEntry struct {
