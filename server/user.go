@@ -28,9 +28,11 @@ func NewUserHandler(logger log.Entry, userRepo billing.UserRepository) *UserHand
 }
 
 type userCreateRequest struct {
-	Tag      string        `json:"tag"`
-	FullName string        `json:"full_name"`
-	Email    billing.Email `json:"email"`
+	Tag       string        `json:"tag"`
+	FirstName string        `json:"first_name"`
+	LastName  string        `json:"last_name"`
+	Password  string        `json:"password"`
+	Email     billing.Email `json:"email"`
 	GenericRequest
 }
 
@@ -71,9 +73,8 @@ func (u *UserHandler) create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	us := &billing.User{
-		Tag:      req.Tag,
-		FullName: req.FullName,
-		Email:    req.Email.String(),
+		Tag:   req.Tag,
+		Email: req.Email.String(),
 	}
 
 	if err := u.userRepo.Create(us); err != nil {
