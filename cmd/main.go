@@ -1,34 +1,63 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
-	"net/http"
+	"os"
 
+	applogger "github.com/fluidcoins/log"
+	"github.com/hashicorp/consul/api"
 	"github.com/yimikao/billing/core"
+	"github.com/yimikao/billing/core/oauth"
 	"github.com/yimikao/billing/server"
 )
 
 func main() {
-	// Initialize Viper across the application
-	core.InitViper()
+
+	var consulAddr string
+
+	flag.StringVar(&consulAddr, "consul", "localhost:8500", "Url to the running consul instance")
+
+	flag.Parse()
+
+	cfg := api.DefaultConfig()
+
+	cfg.Address = consulAddr
+
+	fmt.Println(consulAddr)
+
+	consulClient, err := api.NewClient(cfg)
+	if err != nil {
+		log.Fatalf("could not init consul client... %v", err)
+	}
+
+	if err := core.Load(consulClient); err != nil {
+		log.Fatalf("Could not init configuration... %v", err)
+	}
+
+	conf := core.Global()
 
 	// Initialize Logger across the application
+	logger := applogger.New(applogger.LevelDebug, 4)
 	// logger.InitializeZapCustomLogger()
 
-	// Initialize Oauth2 Services
-	core.InitOauth()
+	hostName, err := os.Hostname()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// Routes for the application
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("home"))
-		return
+	entryLogger := logger.WithFields(map[string]interface{}{
+		"host": hostName,
+		"app":  "billing",
 	})
-	http.HandleFunc("/login", server.NewLoginHandler().Login)
-	http.HandleFunc("/callback", server.NewCallbackHandler().Callback)
 
-	// logger.Log.Info("Started running on http://localhost:" + viper.GetString("port"))
-	fmt.Println("serving...")
-	log.Fatal(http.ListenAndServe(":9090", nil))
+	oauthConfig := oauth.NewGoogleOauthConfig(conf)
+
+	router := server.SetupRoutes(oauthConfig, entryLogger)
+
+	svr := server.New(8080, router)
+
+	server.Run(svr, entryLogger)
 
 }
