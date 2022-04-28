@@ -50,4 +50,15 @@ func newAPIError(code int, s string) APIError {
 	}
 }
 
-var errInvalidRequestBody = newAPIError(http.StatusBadRequest, "Invalid request body")
+var (
+	errInvalidRequestBody = newAPIError(http.StatusBadRequest, "Invalid request body")
+	errUnauthorized       = newAPIError(http.StatusUnauthorized, "You are not authorized to make this request")
+	errForbidden          = newAPIError(http.StatusForbidden, "You are forbidden from making this request")
+)
+
+type UserResponse struct {
+	ID            string `json:"id"`
+	Email         string `json:"email"`
+	VerifiedEmail bool   `json:"verified_email"`
+	Picture       string `json:"picture"`
+}
