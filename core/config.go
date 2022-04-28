@@ -7,9 +7,6 @@ import (
 	"sync/atomic"
 
 	"github.com/hashicorp/consul/api"
-	"github.com/spf13/viper"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 )
 
 var (
@@ -18,38 +15,14 @@ var (
 	consulKVPair   = "yimikao/billing"
 )
 
-var (
-	OauthConfig = &oauth2.Config{
-		ClientID:     "",
-		ClientSecret: "",
-		RedirectURL:  "https://localhost:9090/callback",
-		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
-		Endpoint:     google.Endpoint,
-	}
-
-	OauthState = "state"
-)
-
-func InitOauth() {
-	OauthConfig.ClientID = viper.GetString("CLIENT_ID")
-	OauthConfig.ClientSecret = viper.GetString("CLIENT_SECRET")
-	// oauthState = viper.GetString("oauthStateString")
-}
-
-func InitViper() {
-	viper.SetConfigName("app")
-
-	viper.AddConfigPath(".")
-
-	viper.AutomaticEnv()
-
-	viper.SetConfigType("env")
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("Error reading config file, %s", err)
-	}
-}
-
 type Config struct {
+	Oauth struct {
+		OauthClientID     string   `json:"oauth_client_id"`
+		OauthClientSecret string   `json:"oauth_client_secret"`
+		OauthCallbackURL  string   `json:"oauth_callback_url"`
+		OauthScopes       []string `json:"oauth_scopes"`
+	} `json:"oauth"`
+
 	Database struct {
 		Redis      string `json:"redis"`
 		Postgresql string `json:"postgresql"`
