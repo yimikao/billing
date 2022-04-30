@@ -34,6 +34,21 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 	return m.recorder
 }
 
+// CheckAlreadyRegistered mocks base method.
+func (m *MockUserRepository) CheckAlreadyRegistered(arg0 string) (*billing.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckAlreadyRegistered", arg0)
+	ret0, _ := ret[0].(*billing.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckAlreadyRegistered indicates an expected call of CheckAlreadyRegistered.
+func (mr *MockUserRepositoryMockRecorder) CheckAlreadyRegistered(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckAlreadyRegistered", reflect.TypeOf((*MockUserRepository)(nil).CheckAlreadyRegistered), arg0)
+}
+
 // Create mocks base method.
 func (m *MockUserRepository) Create(arg0 *billing.User) error {
 	m.ctrl.T.Helper()
