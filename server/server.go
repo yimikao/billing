@@ -8,11 +8,14 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/fluidcoins/log"
+	applogger "github.com/fluidcoins/log"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-pg/pg/v10"
 	"github.com/rs/cors"
 	"github.com/yimikao/billing/core/oauth"
+	"github.com/yimikao/billing/database/postgres"
+
 	"golang.org/x/oauth2"
 )
 
@@ -22,16 +25,17 @@ const (
 	userCtx ContextKey = "user"
 )
 
-func New(port int64, h http.Handler) *http.Server {
+func New(
+	port int64, cfg *oauth2.Config, logger applogger.Entry, dbConn *pg.DB) *http.Server {
 
 	return &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: h,
+		Handler: SetupRoutes(dbConn, cfg, logger),
 	}
 
 }
 
-func SetupRoutes(cfg *oauth2.Config, logger log.Entry) http.Handler {
+func SetupRoutes(dbConn *pg.DB, cfg *oauth2.Config, logger applogger.Entry) http.Handler {
 
 	router, oauthclient := chi.NewRouter(), oauth.NewGoogleOauthClient(cfg)
 
@@ -51,13 +55,14 @@ func SetupRoutes(cfg *oauth2.Config, logger log.Entry) http.Handler {
 	loginHandler := NewLoginHandler(cfg, logger)
 	router.Get("/auth/google/login", loginHandler.Login)
 
-	callbackHandler := NewCallbackHandler(oauthclient, logger)
+	userLayer := postgres.NewUserLayer(dbConn)
+	callbackHandler := NewCallbackHandler(oauthclient, logger, userLayer)
 	router.Get("/auth/google/callback", callbackHandler.Callback)
 
 	return cors.AllowAll().Handler(router)
 }
 
-func Run(s *http.Server, entryLogger log.Entry) {
+func Run(s *http.Server, entryLogger applogger.Entry) {
 
 	sig := make(chan os.Signal, 1)
 

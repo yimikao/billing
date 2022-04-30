@@ -54,9 +54,7 @@ func main() {
 
 	oauthConfig := oauth.NewGoogleOauthConfig(conf)
 
-	router := server.SetupRoutes(oauthConfig, entryLogger)
-
-	svr := server.New(8080, router)
+	svr := server.New(8080, oauthConfig, entryLogger, nil)
 
 	server.Run(svr, entryLogger)
 
