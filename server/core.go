@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -77,6 +76,7 @@ func (h *CallbackHandler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseForm()
 	if err != nil {
+		//
 		h.logger.WithError(err).Error("request body malformed")
 		_ = render.Render(w, r, newAPIError(http.StatusBadRequest, "invalid request url queries"))
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
@@ -86,30 +86,39 @@ func (h *CallbackHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	oauthStateCookie, _ := r.Cookie("oauthstate")
 
 	if r.FormValue("state") != oauthStateCookie.Value {
-		log.Println("invalid oauth google state")
+
+		h.logger.Error("invalid oauth google state")
+		_ = render.Render(w, r, newAPIError(http.StatusBadRequest, "invalid request url queries. invalid oauth gogle state"))
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
+
 	}
 
 	code := r.FormValue("code")
 	if code == "" {
-		log.Println("auth code not supplied")
+
+		h.logger.Error("auth code not supplied")
+		_ = render.Render(w, r, newAPIError(http.StatusBadRequest, "invalid request url queries. auth code not supplied"))
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
+
 	}
 
 	data, err := h.client.GetUserDataFromGoogle(code)
 	if err != nil {
-		log.Println(err.Error())
+
+		h.logger.WithError(err).Error("could not get user data from google with supplied code")
+		_ = render.Render(w, r, newAPIError(http.StatusBadRequest, "invalid request url queries"))
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
+
 	}
 
 	var ur = new(UserResponse)
 	if err := json.Unmarshal(data, ur); err != nil {
-		log.Println(err.Error())
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
+
+		h.logger.Info("user data gotten successfully")
+
 	}
 
 	// fmt.Fprintf(w, "UserInfo: %s\n %s\n", ur.Email, ur.Picture)
