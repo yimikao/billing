@@ -1,6 +1,9 @@
 package postgres
 
 import (
+	"database/sql"
+	"errors"
+
 	pg "github.com/go-pg/pg/v10"
 	"github.com/yimikao/billing"
 )
@@ -11,6 +14,22 @@ type userLayer struct {
 
 func NewUserLayer(db *pg.DB) billing.UserRepository {
 	return &userLayer{db: db}
+}
+
+func (l *userLayer) CheckAlreadyRegistered(email string) (*billing.User, error) {
+	user := new(billing.User)
+
+	err := l.db.Model(user).
+		Where("email = ?", email).
+		Select()
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return user, errors.New("user not yet registered")
+		}
+	}
+
+	return user, err
 }
 
 func (l *userLayer) Create(u *billing.User) error {
