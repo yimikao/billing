@@ -4,12 +4,13 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	applogger "github.com/fluidcoins/log"
+	"github.com/go-chi/render"
+	"github.com/yimikao/billing"
 	"github.com/yimikao/billing/core/oauth"
 	"golang.org/x/oauth2"
 )
@@ -59,14 +60,16 @@ func (h *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 type CallbackHandler struct {
-	client *oauth.GoogleOauthClient
-	logger applogger.Entry
+	client   *oauth.GoogleOauthClient
+	logger   applogger.Entry
+	userRepo billing.UserRepository
 }
 
-func NewCallbackHandler(client *oauth.GoogleOauthClient, logger applogger.Entry) *CallbackHandler {
+func NewCallbackHandler(client *oauth.GoogleOauthClient, logger applogger.Entry, userRepo billing.UserRepository) *CallbackHandler {
 	return &CallbackHandler{
-		client: client,
-		logger: logger,
+		client:   client,
+		logger:   logger,
+		userRepo: userRepo,
 	}
 }
 
@@ -74,7 +77,8 @@ func (h *CallbackHandler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseForm()
 	if err != nil {
-		log.Println(err.Error())
+		h.logger.WithError(err).Error("request body malformed")
+		_ = render.Render(w, r, newAPIError(http.StatusBadRequest, "invalid request url queries"))
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
@@ -108,9 +112,15 @@ func (h *CallbackHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "UserInfo: %s\n %s\n", ur.Email, ur.Picture)
+	// fmt.Fprintf(w, "UserInfo: %s\n %s\n", ur.Email, ur.Picture)
 
-	// t, _ := template.ParseFiles("templates/success.html")
-	// t.Execute(w, ur)
-	// fmt.Fprintf(w, "UserInfo: %s\n", data)
+	u, err := h.userRepo.CheckAlreadyRegistered(ur.Email)
+
+	if err != nil {
+		// go to registration flow.
+		return
+	}
+
+	_ = u
+	// load user account data
 }
