@@ -12,8 +12,8 @@ type User struct {
 	FirstName       string `json:"first_name"`
 	LastName        string `json:"last_name"`
 	Email           string `json:"email"`
-	IsEmailVerified bool   `json:"is_email_verified"`
-	Password        string `json:"password"`
+	TransactionCode string
+	// IsEmailVerified bool   `json:"is_email_verified"`
 }
 
 type Email string
@@ -27,6 +27,7 @@ func (e Email) Value() (driver.Value, error) {
 }
 
 type UserRepository interface {
+	CheckAlreadyRegistered(string) (*User, error)
 	Create(*User) error
 	GetByReference(string) (*User, error)
 }
