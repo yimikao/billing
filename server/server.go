@@ -56,8 +56,12 @@ func SetupRoutes(dbConn *pg.DB, cfg *oauth2.Config, logger applogger.Entry) http
 	router.Get("/auth/google/login", loginHandler.Login)
 
 	userLayer := postgres.NewUserLayer(dbConn)
-	callbackHandler := NewCallbackHandler(oauthclient, logger, userLayer)
+
+	callbackHandler := NewCallbackHandler(oauthclient, userLayer, logger)
 	router.Get("/auth/google/callback", callbackHandler.Callback)
+
+	userRegistrationHandler := NewUserRegistrationHandler(userLayer, logger)
+	router.Post("/register", userRegistrationHandler.RegisterUser)
 
 	return cors.AllowAll().Handler(router)
 }

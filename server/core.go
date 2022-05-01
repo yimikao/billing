@@ -63,15 +63,15 @@ func (h *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 type CallbackHandler struct {
 	client   *oauth.GoogleOauthClient
-	logger   applogger.Entry
 	userRepo billing.UserRepository
+	logger   applogger.Entry
 }
 
-func NewCallbackHandler(client *oauth.GoogleOauthClient, logger applogger.Entry, userRepo billing.UserRepository) *CallbackHandler {
+func NewCallbackHandler(client *oauth.GoogleOauthClient, userRepo billing.UserRepository, logger applogger.Entry) *CallbackHandler {
 	return &CallbackHandler{
 		client:   client,
-		logger:   logger,
 		userRepo: userRepo,
+		logger:   logger,
 	}
 }
 
@@ -137,9 +137,16 @@ func (h *CallbackHandler) Callback(w http.ResponseWriter, r *http.Request) {
 	// load user account data
 }
 
-type RegisterHandler struct {
+type UserRegistrationHandler struct {
 	userRepo billing.UserRepository
 	logger   applogger.Entry
+}
+
+func NewUserRegistrationHandler(ur billing.UserRepository, l applogger.Entry) *UserRegistrationHandler {
+	return &UserRegistrationHandler{
+		userRepo: ur,
+		logger:   l,
+	}
 }
 
 type registerUserRequest struct {
@@ -189,7 +196,7 @@ func (req *registerUserRequest) validate() error {
 
 }
 
-func (h *RegisterHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserRegistrationHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	var req = new(registerUserRequest)
 
