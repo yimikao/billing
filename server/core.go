@@ -149,7 +149,7 @@ func NewUserRegistrationHandler(ur billing.UserRepository, l applogger.Entry) *U
 	}
 }
 
-type registerUserRequest struct {
+type userRegistrationRequest struct {
 	// will be fetched automatically from google account
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
@@ -162,7 +162,7 @@ type registerUserRequest struct {
 	GenericRequest
 }
 
-func (req *registerUserRequest) validate() error {
+func (req *userRegistrationRequest) validate() error {
 
 	if strings.TrimSpace(req.Tag) == "" {
 		return errors.New("please provide a valid tag")
@@ -172,8 +172,8 @@ func (req *registerUserRequest) validate() error {
 		return errors.New("tag cannot be less than four characters")
 	}
 
-	if len(strings.TrimSpace(req.Tag)) > 4 {
-		return errors.New("transaction code cannot be more than 15 characters")
+	if len(strings.TrimSpace(req.Tag)) > 15 {
+		return errors.New("tag cannot be more than 15 characters")
 	}
 
 	if strings.TrimSpace(req.TransactionCode) == "" {
@@ -196,19 +196,19 @@ func (req *registerUserRequest) validate() error {
 
 }
 
-func (h *UserRegistrationHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserRegistrationHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 
-	var req = new(registerUserRequest)
+	var req = new(userRegistrationRequest)
 
 	if err := render.Bind(r, req); err != nil {
 		h.logger.WithError(err).Error("request body malformed")
-		_ = render.Render(w, r, newAPIError(http.StatusBadRequest, "invalid request body"))
+		_ = render.Render(w, r, errInvalidRequestBody)
 		return
 	}
 
 	if err := req.validate(); err != nil {
 		h.logger.WithError(err).Error("request body malformed")
-		_ = render.Render(w, r, newAPIError(http.StatusBadRequest, "invalid request body"))
+		_ = render.Render(w, r, errInvalidRequestBody)
 		return
 	}
 
@@ -226,6 +226,7 @@ func (h *UserRegistrationHandler) RegisterUser(w http.ResponseWriter, r *http.Re
 	}
 
 	_ = render.Render(w, r, newAPIStatus(http.StatusOK, "registration sucessfull"))
+	w.Write([]byte("ssdssds"))
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 
 }

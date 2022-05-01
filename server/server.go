@@ -61,7 +61,7 @@ func SetupRoutes(dbConn *pg.DB, cfg *oauth2.Config, logger applogger.Entry) http
 	router.Get("/auth/google/callback", callbackHandler.Callback)
 
 	userRegistrationHandler := NewUserRegistrationHandler(userLayer, logger)
-	router.Post("/register", userRegistrationHandler.RegisterUser)
+	router.Post("/register", userRegistrationHandler.registerUser)
 
 	return cors.AllowAll().Handler(router)
 }
