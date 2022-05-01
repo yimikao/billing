@@ -4,7 +4,10 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	applogger "github.com/fluidcoins/log"
@@ -132,4 +135,90 @@ func (h *CallbackHandler) Callback(w http.ResponseWriter, r *http.Request) {
 
 	_ = u
 	// load user account data
+}
+
+type RegisterHandler struct {
+	userRepo billing.UserRepository
+	logger   applogger.Entry
+}
+
+type registerUserRequest struct {
+	// will be fetched automatically from google account
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Avatar    string `json:"avatar"`
+
+	// to be entered by user
+	Tag             string `json:"tag"`
+	TransactionCode string `json:"transaction_code"`
+	GenericRequest
+}
+
+func (req *registerUserRequest) validate() error {
+
+	if strings.TrimSpace(req.Tag) == "" {
+		return errors.New("please provide a valid tag")
+	}
+
+	if len(strings.TrimSpace(req.Tag)) < 4 {
+		return errors.New("tag cannot be less than four characters")
+	}
+
+	if len(strings.TrimSpace(req.Tag)) > 4 {
+		return errors.New("transaction code cannot be more than 15 characters")
+	}
+
+	if strings.TrimSpace(req.TransactionCode) == "" {
+		return errors.New("please provide transaction code")
+	}
+
+	if _, err := strconv.Atoi(strings.TrimSpace(req.TransactionCode)); err != nil {
+		return errors.New("transaction code must be digits alone")
+	}
+
+	if len(strings.TrimSpace(req.TransactionCode)) < 4 {
+		return errors.New("transaction code cannot be less than four digits")
+	}
+
+	if len(strings.TrimSpace(req.TransactionCode)) > 4 {
+		return errors.New("transaction code cannot be more than four digits")
+	}
+
+	return nil
+
+}
+
+func (h *RegisterHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
+
+	var req = new(registerUserRequest)
+
+	if err := render.Bind(r, req); err != nil {
+		h.logger.WithError(err).Error("request body malformed")
+		_ = render.Render(w, r, newAPIError(http.StatusBadRequest, "invalid request body"))
+		return
+	}
+
+	if err := req.validate(); err != nil {
+		h.logger.WithError(err).Error("request body malformed")
+		_ = render.Render(w, r, newAPIError(http.StatusBadRequest, "invalid request body"))
+		return
+	}
+
+	us := &billing.User{
+		Tag:             req.Tag,
+		FirstName:       req.FirstName,
+		LastName:        req.LastName,
+		Email:           req.Email,
+		TransactionCode: req.TransactionCode,
+	}
+
+	if err := h.userRepo.Create(us); err != nil {
+		_ = render.Render(w, r, newAPIError(http.StatusInternalServerError, err.Error()))
+		return
+	}
+
+	_ = render.Render(w, r, newAPIStatus(http.StatusOK, "registration sucessfull"))
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+
 }
