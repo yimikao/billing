@@ -24,8 +24,12 @@ type Config struct {
 	} `json:"oauth"`
 
 	Database struct {
-		Redis      string `json:"redis"`
 		Postgresql string `json:"postgresql"`
+		Redis      struct {
+			Password string `json:"password"`
+			Addr     string `json:"addr"`
+			UseTLS   bool   `json:"use_tls"`
+		} `json:"redis"`
 	} `json:"database"`
 }
 
