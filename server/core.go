@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -12,8 +13,10 @@ import (
 
 	applogger "github.com/fluidcoins/log"
 	"github.com/go-chi/render"
+	"github.com/go-redis/redis/v8"
 	"github.com/yimikao/billing"
 	"github.com/yimikao/billing/core/oauth"
+	redisDB "github.com/yimikao/billing/database/redis"
 	"golang.org/x/oauth2"
 )
 
@@ -138,14 +141,18 @@ func (h *CallbackHandler) Callback(w http.ResponseWriter, r *http.Request) {
 }
 
 type UserRegistrationHandler struct {
-	userRepo billing.UserRepository
-	logger   applogger.Entry
+	userRepo    billing.UserRepository
+	logger      applogger.Entry
+	redisClient *redisDB.Client
+	context     context.Context
 }
 
-func NewUserRegistrationHandler(ur billing.UserRepository, l applogger.Entry) *UserRegistrationHandler {
+func NewUserRegistrationHandler(ur billing.UserRepository, l applogger.Entry, rc *redisDB.Client, ctx context.Context) *UserRegistrationHandler {
 	return &UserRegistrationHandler{
-		userRepo: ur,
-		logger:   l,
+		userRepo:    ur,
+		logger:      l,
+		redisClient: rc,
+		context:     ctx,
 	}
 }
 
@@ -225,8 +232,55 @@ func (h *UserRegistrationHandler) registerUser(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	if err := h.redisClient.StoreData(h.context, redisDB.Userdata, us); err != nil {
+		_ = render.Render(w, r, newAPIError(http.StatusInternalServerError, err.Error()))
+		return
+	}
+
 	_ = render.Render(w, r, newAPIStatus(http.StatusOK, "registration sucessfull"))
-	w.Write([]byte("ssdssds"))
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/", http.StatusPermanentRedirect)
+
+}
+
+type HomepageHandler struct {
+	// userData *billing.User
+	logger      applogger.Entry
+	redisClient *redisDB.Client
+	context     context.Context
+}
+
+func NewHomepageHandler(logger applogger.Entry, redisClient *redisDB.Client, ctx context.Context) *HomepageHandler {
+	return &HomepageHandler{
+		// userData: userData,
+		logger:      logger,
+		redisClient: redisClient,
+		context:     ctx,
+	}
+}
+
+func (h *HomepageHandler) displayUserData(w http.ResponseWriter, r *http.Request) {
+
+	userData, err := h.redisClient.GetData(h.context, redisDB.Userdata)
+
+	if err != nil {
+		if err == redis.Nil {
+			h.logger.WithError(err).Error(err.Error())
+			_ = render.Render(w, r, newAPIError(http.StatusNotFound, "key does not exist"))
+			return
+		}
+
+		h.logger.WithError(err).Error(err.Error())
+		_ = render.Render(w, r, newAPIError(http.StatusInternalServerError, "could not get user data"))
+		return
+
+	}
+
+	u := new(billing.User)
+
+	if err := json.Unmarshal([]byte(userData), u); err != nil {
+		h.logger.WithError(err).Error(err.Error())
+		_ = render.Render(w, r, newAPIError(http.StatusInternalServerError, "could not load user data"))
+		return
+	}
 
 }

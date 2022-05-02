@@ -22,7 +22,7 @@ func TestRegisterUserHandler(t *testing.T) {
 	}{
 		{
 			name:           "successful registration",
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusPermanentRedirect,
 			buildStubs: func(store *mocks.MockUserRepository) {
 				store.EXPECT().Create(gomock.Any()).Times(1).Return(nil)
 			},
