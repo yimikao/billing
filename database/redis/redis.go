@@ -10,11 +10,16 @@ import (
 	"github.com/yimikao/billing/core"
 )
 
-type redisKey string
+type CacheKey string
 
 const (
-	Userdata = redisKey("userdata")
+	Userdata = CacheKey("userdata")
 )
+
+type Cache interface {
+	StoreData(context.Context, CacheKey, interface{}) error
+	GetData(context.Context, CacheKey) (string, error)
+}
 
 type Client struct {
 	inner *redis.Client
@@ -53,10 +58,10 @@ func New(dsn string) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) StoreData(ctx context.Context, key redisKey, data interface{}) error {
+func (c *Client) StoreData(ctx context.Context, key CacheKey, data interface{}) error {
 	return c.inner.Set(ctx, string(key), data, 0).Err()
 }
 
-func (c *Client) GetData(ctx context.Context, key redisKey) (string, error) {
+func (c *Client) GetData(ctx context.Context, key CacheKey) (string, error) {
 	return c.inner.Get(ctx, string(key)).Result()
 }

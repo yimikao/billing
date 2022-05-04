@@ -15,6 +15,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/yimikao/billing/core/oauth"
 	"github.com/yimikao/billing/database/postgres"
+	redisDB "github.com/yimikao/billing/database/redis"
 
 	"golang.org/x/oauth2"
 )
@@ -48,9 +49,10 @@ func SetupRoutes(dbConn *pg.DB, cfg *oauth2.Config, logger applogger.Entry) http
 		fmt.Fprintf(w, `{ "status" : "ok" }`)
 	})
 
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, `{ "status" : "welcome home" }`)
-	})
+	context := context.Background()
+
+	// homepageHandler := NewHomepageHandler(nil, logger)
+	// router.Get("/", homepageHandler)
 
 	loginHandler := NewLoginHandler(cfg, logger)
 	router.Get("/auth/google/login", loginHandler.Login)
@@ -60,7 +62,7 @@ func SetupRoutes(dbConn *pg.DB, cfg *oauth2.Config, logger applogger.Entry) http
 	callbackHandler := NewCallbackHandler(oauthclient, userLayer, logger)
 	router.Get("/auth/google/callback", callbackHandler.Callback)
 
-	userRegistrationHandler := NewUserRegistrationHandler(userLayer, logger)
+	userRegistrationHandler := NewUserRegistrationHandler(userLayer, logger, &redisDB.Client{}, context)
 	router.Post("/register", userRegistrationHandler.registerUser)
 
 	return cors.AllowAll().Handler(router)

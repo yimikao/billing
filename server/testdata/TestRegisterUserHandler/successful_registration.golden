@@ -1,2 +1,1 @@
-{"status":true,"message":"registration sucessfull"}
-ssdssds
+{"id":"00000000-0000-0000-0000-000000000000","reference":"","created_at":"0001-01-01T00:00:00Z","updated_at":"0001-01-01T00:00:00Z","tag":"moneyman","first_name":"firstname","last_name":"lastname","email":"email@email.com","TransactionCode":"0000"}

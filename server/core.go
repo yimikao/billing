@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -141,18 +142,20 @@ func (h *CallbackHandler) Callback(w http.ResponseWriter, r *http.Request) {
 }
 
 type UserRegistrationHandler struct {
-	userRepo    billing.UserRepository
-	logger      applogger.Entry
-	redisClient *redisDB.Client
-	context     context.Context
+	userRepo billing.UserRepository
+	logger   applogger.Entry
+	// redisClient *redisDB.Client
+	cache   redisDB.Cache
+	context context.Context
 }
 
-func NewUserRegistrationHandler(ur billing.UserRepository, l applogger.Entry, rc *redisDB.Client, ctx context.Context) *UserRegistrationHandler {
+func NewUserRegistrationHandler(ur billing.UserRepository, l applogger.Entry, cache redisDB.Cache, ctx context.Context) *UserRegistrationHandler {
 	return &UserRegistrationHandler{
-		userRepo:    ur,
-		logger:      l,
-		redisClient: rc,
-		context:     ctx,
+		userRepo: ur,
+		logger:   l,
+		// redisClient: rc,
+		cache:   cache,
+		context: ctx,
 	}
 }
 
@@ -232,35 +235,44 @@ func (h *UserRegistrationHandler) registerUser(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if err := h.redisClient.StoreData(h.context, redisDB.Userdata, us); err != nil {
+	b, _ := json.Marshal(us)
+	_ = b
+
+	if err := h.cache.StoreData(h.context, redisDB.Userdata, "hello"); err != nil {
 		_ = render.Render(w, r, newAPIError(http.StatusInternalServerError, err.Error()))
 		return
 	}
 
-	_ = render.Render(w, r, newAPIStatus(http.StatusOK, "registration sucessfull"))
+	if err := json.NewEncoder(w).Encode(us); err != nil {
+		log.Fatal(err)
+	}
+
+	// _ = render.Render(w, r, newAPIStatus(http.StatusOK, "registration sucessfull"))
 	http.Redirect(w, r, "/", http.StatusPermanentRedirect)
 
 }
 
 type HomepageHandler struct {
 	// userData *billing.User
-	logger      applogger.Entry
-	redisClient *redisDB.Client
-	context     context.Context
+	logger applogger.Entry
+	// redisClient *redisDB.Client
+	cache   redisDB.Cache
+	context context.Context
 }
 
-func NewHomepageHandler(logger applogger.Entry, redisClient *redisDB.Client, ctx context.Context) *HomepageHandler {
+func NewHomepageHandler(logger applogger.Entry, cache redisDB.Cache, ctx context.Context) *HomepageHandler {
 	return &HomepageHandler{
 		// userData: userData,
-		logger:      logger,
-		redisClient: redisClient,
-		context:     ctx,
+		logger: logger,
+		// redisClient: redisClient,
+		cache:   cache,
+		context: ctx,
 	}
 }
 
 func (h *HomepageHandler) displayUserData(w http.ResponseWriter, r *http.Request) {
 
-	userData, err := h.redisClient.GetData(h.context, redisDB.Userdata)
+	userData, err := h.cache.GetData(h.context, redisDB.Userdata)
 
 	if err != nil {
 		if err == redis.Nil {
